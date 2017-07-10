@@ -492,7 +492,7 @@ public class Execute {
      *            of the subprocess failed.
      * @since Ant 1.6
      */
-    public void spawn(final boolean failOnError) throws IOException {
+    public void spawn(boolean failOnError) throws IOException {
         if (workingDirectory != null && !workingDirectory.exists()) {
             throw new BuildException("%s doesn't exist.", workingDirectory);
         }
@@ -521,23 +521,23 @@ public class Execute {
         handler.start();
         process.getOutputStream().close();
 
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    process.waitFor();
+        if (failOnError) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        process.waitFor();
 
-                    int returnCode = process.exitValue();
+                        int returnCode = process.exitValue();
 
-                    if (Execute.isFailure(returnCode)) {
-                        if (failOnError) {
+                        if (Execute.isFailure(returnCode)) {
                             throw new BuildException(process + " returned: " + returnCode);
                         }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
-            }
-        }).start();
+            }).start();
+        }
 
         project.log("spawned process " + process.toString(),
                     Project.MSG_VERBOSE);
