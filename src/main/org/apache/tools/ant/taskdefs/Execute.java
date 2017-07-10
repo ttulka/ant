@@ -492,13 +492,14 @@ public class Execute {
      *            of the subprocess failed.
      * @since Ant 1.6
      */
-    public void spawn() throws IOException {
+    public void spawn(final boolean failOnError) throws IOException {
         if (workingDirectory != null && !workingDirectory.exists()) {
             throw new BuildException("%s doesn't exist.", workingDirectory);
         }
         final Process process = launch(project, getCommandline(),
                                        getEnvironment(), workingDirectory,
                                        useVMLauncher);
+
         if (Os.isFamily("windows")) {
             try {
                 Thread.sleep(ONE_SECOND);
@@ -519,6 +520,24 @@ public class Execute {
         handler.setProcessOutputStream(process.getInputStream());
         handler.start();
         process.getOutputStream().close();
+
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    process.waitFor();
+
+                    int returnCode = process.exitValue();
+
+                    if (Execute.isFailure(returnCode)) {
+                        if (failOnError) {
+                            throw new BuildException(process + " returned: " + returnCode);
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }).start();
 
         project.log("spawned process " + process.toString(),
                     Project.MSG_VERBOSE);

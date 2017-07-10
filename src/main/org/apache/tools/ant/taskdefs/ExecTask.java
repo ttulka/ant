@@ -265,7 +265,6 @@ public class ExecTask extends Task {
      */
     public void setFailonerror(boolean fail) {
         failOnError = fail;
-        incompatibleWithSpawn |= fail;
     }
 
     /**
@@ -363,7 +362,6 @@ public class ExecTask extends Task {
      */
     public void setFailIfExecutionFails(boolean flag) {
         failIfExecFails = flag;
-        incompatibleWithSpawn |= flag;
     }
 
     /**
@@ -515,7 +513,7 @@ public class ExecTask extends Task {
         }
         if (spawn && incompatibleWithSpawn) {
             getProject().log("spawn does not allow attributes related to input, "
-            + "output, error, result", Project.MSG_ERR);
+            + "output, result", Project.MSG_ERR);
             getProject().log("spawn also does not allow timeout", Project.MSG_ERR);
             getProject().log("finally, spawn is not compatible "
                 + "with a nested I/O <redirector>", Project.MSG_ERR);
@@ -646,7 +644,7 @@ public class ExecTask extends Task {
                 log("Result: " + returnCode, Project.MSG_ERR);
             }
         } else {
-            exe.spawn();
+            exe.spawn(failOnError);
         }
     }
 
